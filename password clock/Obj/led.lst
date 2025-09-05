@@ -1,0 +1,150 @@
+C51 COMPILER V9.59.0.0   LED                                                               09/05/2025 19:07:46 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE LED
+OBJECT MODULE PLACED IN .\Obj\led.obj
+COMPILER INVOKED BY: D:\Program Files\Keil\Keil_v5\C51\BIN\C51.EXE App\LED\led.c OPTIMIZE(8,SPEED) BROWSE INCDIR(.\Publi
+                    -c;.\App\LCD1602;.\App\LED;.\App\Button;.\App\Beep;.\App\Motor;.\App\Change;.\App\Paused;.\App\Eeprow) DEBUG OBJECTEXTEND
+                    - PRINT(.\Obj\led.lst) TABS(2) OBJECT(.\Obj\led.obj)
+
+line level    source
+
+   1          #include "led.h"
+   2          uchar record[11]={0x3f,0x06,0x5b,0x4f,0x66,0x6d,0x7d,0x07,0x7f,0x6f,0x40};
+   3          
+   4          void decode3_8(unsigned char i) 
+   5          {
+   6   1          pin2=i&0x01;       
+   7   1          pin3=(i>>1)&0x01; 
+   8   1          pin4=(i>>2)&0x01;
+   9   1        return; 
+  10   1      }
+  11          
+  12          void led_show(uchar *str)
+  13          {
+  14   1        uchar i=6;
+  15   1        while(*str!='\0')
+  16   1        {
+  17   2          led_data=0x00;      //消除伪影，前后都要消除
+  18   2          decode3_8(i--);
+  19   2          led_data=record[*str-'0'];
+  20   2          delay_ms(1);
+  21   2          str++;  
+  22   2        }
+  23   1        while(i>0)
+  24   1        {
+  25   2          led_data=0x00;
+  26   2          decode3_8(i--);
+  27   2          led_data=record[10];
+  28   2          delay_ms(1);
+  29   2        }
+  30   1        led_data=0x00;
+  31   1        return ;
+  32   1      }
+  33          
+  34          void led_paused()
+  35          {
+  36   1        uchar i=1;
+  37   1        uint time=paused_time;
+  38   1        if(time==0)
+  39   1        {
+  40   2          led_data=0x00;
+  41   2          decode3_8(1);
+  42   2          led_data=record[0];
+  43   2          delay_ms(1);
+  44   2          led_data=0x00;
+  45   2          return ;
+  46   2        }
+  47   1        while(time)
+  48   1        {
+  49   2          led_data=0x00;
+  50   2          decode3_8(i++);
+  51   2          led_data=record[time%10];
+  52   2          time=time/10;
+  53   2          delay_ms(2);  
+C51 COMPILER V9.59.0.0   LED                                                               09/05/2025 19:07:46 PAGE 2   
+
+  54   2        }
+  55   1        led_data=0x00;
+  56   1        return ;  
+  57   1      }
+  58          
+  59          void num()
+  60          {
+  61   1        uint kks=0;
+  62   1        if (now_str_loc < 6) 
+  63   1        { 
+  64   2          now_str[now_str_loc++]=now;
+  65   2          now_str[now_str_loc]='\0';  //添加终止符
+  66   2        } 
+  67   1        else 
+  68   1        {
+  69   2          while(kks<5)
+  70   2          {
+  71   3            now_str[kks]=now_str[kks+1];
+  72   3            kks++;
+  73   3          }
+  74   2          now_str[kks]=now;
+  75   2          now_str[now_str_loc]='\0';
+  76   2        }
+  77   1        return ;
+  78   1      }
+  79          
+  80          void del()
+  81          {
+  82   1        if(now_str_loc>0)
+  83   1        {
+  84   2          now_str_loc--;
+  85   2          now_str[now_str_loc]='\0';
+  86   2        }
+  87   1        else return;
+  88   1        return;
+  89   1      }
+  90          
+  91          void change_num()
+  92          {
+  93   1        uint kks=0;
+  94   1        if (change_str_loc < 6) 
+  95   1        { 
+  96   2          change_str[change_str_loc++]=change;
+  97   2          change_str[change_str_loc]='\0';  //添加终止符
+  98   2        } 
+  99   1        else 
+ 100   1        {
+ 101   2          while(kks<5)
+ 102   2          {
+ 103   3            change_str[kks]=change_str[kks+1];
+ 104   3            kks++;
+ 105   3          }
+ 106   2          change_str[kks]=change;
+ 107   2          change_str[change_str_loc]='\0';
+ 108   2        }
+ 109   1        return ;
+ 110   1      }
+ 111          
+ 112          void change_del()
+ 113          {
+ 114   1        if(change_str_loc>0)
+ 115   1        {
+C51 COMPILER V9.59.0.0   LED                                                               09/05/2025 19:07:46 PAGE 3   
+
+ 116   2          change_str_loc--;
+ 117   2          change_str[change_str_loc]='\0';
+ 118   2        }
+ 119   1        else return;
+ 120   1        return;
+ 121   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    400    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     11       7
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

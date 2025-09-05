@@ -1,0 +1,267 @@
+C51 COMPILER V9.59.0.0   LCD1602                                                           09/05/2025 19:07:46 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE LCD1602
+OBJECT MODULE PLACED IN .\Obj\lcd1602.obj
+COMPILER INVOKED BY: D:\Program Files\Keil\Keil_v5\C51\BIN\C51.EXE App\LCD1602\lcd1602.c OPTIMIZE(8,SPEED) BROWSE INCDIR
+                    -(.\Public;.\App\LCD1602;.\App\LED;.\App\Button;.\App\Beep;.\App\Motor;.\App\Change;.\App\Paused;.\App\Eeprow) DEBUG OBJE
+                    -CTEXTEND PRINT(.\Obj\lcd1602.lst) TABS(2) OBJECT(.\Obj\lcd1602.obj)
+
+line level    source
+
+   1          #include "lcd1602.h"
+   2          
+   3          //写命令
+   4          void lcd1602_write_cmd(uchar cmd)
+   5          {
+   6   1        LCD1602_RS=0;//选择命令
+   7   1        LCD1602_RW=0;//选择写
+   8   1        LCD1602_E=0;
+   9   1        LCD1602_data=cmd;//准备命令
+  10   1        delay_ms(1);
+  11   1        LCD1602_E=1;//使能脚E先上升沿写入
+  12   1        delay_ms(1);
+  13   1        LCD1602_E=0;//使能脚E后负跳变完成写入 
+  14   1      }
+  15          
+  16          //写数据
+  17          void lcd1602_write_data(uchar dat) 
+  18          {
+  19   1        LCD1602_RS=1;//选择数据
+  20   1        LCD1602_RW=0;//选择写
+  21   1        LCD1602_E=0;
+  22   1        LCD1602_data=dat;//准备数据
+  23   1        delay_ms(1);
+  24   1        LCD1602_E=1;//使能脚E先上升沿写入
+  25   1        delay_ms(1);
+  26   1        LCD1602_E=0;//使能脚E后负跳变完成写入   
+  27   1      }
+  28          
+  29          //清屏
+  30          void lcd1602_clear()
+  31          {
+  32   1        lcd1602_write_cmd(0x01);  
+  33   1      }
+  34          //初始化
+  35          void lcd1602_init()
+  36          {
+  37   1        lcd1602_write_cmd(0x38);//数据总线8位，显示2行，5*7点阵/字符
+  38   1        lcd1602_write_cmd(0x0c);//显示功能开，无光标，光标闪烁
+  39   1        lcd1602_write_cmd(0x06);//写入新数据后光标右移，显示屏不移动
+  40   1        lcd1602_clear();//清屏  
+  41   1      }
+  42          
+  43          //断电与唤醒
+  44          void lcd1602_stop()
+  45          {
+  46   1        lcd1602_write_cmd(0x08); 
+  47   1      }
+  48          void lcd1602_wake()
+  49          {
+  50   1        lcd1602_write_cmd(0x0C);
+  51   1      }
+  52          
+  53          //显示函数
+C51 COMPILER V9.59.0.0   LCD1602                                                           09/05/2025 19:07:46 PAGE 2   
+
+  54          void lcd1602_show(uchar x,uchar y,uchar *str)
+  55          {
+  56   1        uchar i=0;
+  57   1      
+  58   1        if(y>1||x>15)return;//行列参数不对则强制退出
+  59   1      
+  60   1        if(y<1) //第1行显示
+  61   1        { 
+  62   2          while(*str!='\0')//字符串是以'\0'结尾，只要前面有内容就显示
+  63   2          {
+  64   3            if(i<16-x)//如果字符长度超过第一行显示范围，则在第二行继续显示
+  65   3            {
+  66   4              lcd1602_write_cmd(0x80+i+x);//第一行显示地址设置  
+  67   4            }
+  68   3            else
+  69   3            {
+  70   4              lcd1602_write_cmd(0x40+0x80+i+x-16);//第二行显示地址设置  
+  71   4            }
+  72   3            lcd1602_write_data(*str);//显示内容
+  73   3            str++;//指针递增
+  74   3            i++;  
+  75   3          } 
+  76   2        }
+  77   1        else  //第2行显示
+  78   1        {
+  79   2          while(*str!='\0')
+  80   2          {
+  81   3            if(i<16-x) //如果字符长度超过第二行显示范围，则在第一行继续显示
+  82   3            {
+  83   4              lcd1602_write_cmd(0x80+0x40+i+x); 
+  84   4            }
+  85   3            else
+  86   3            {
+  87   4              lcd1602_write_cmd(0x80+i+x-16); 
+  88   4            }
+  89   3            lcd1602_write_data(*str);
+  90   3            str++;
+  91   3            i++;  
+  92   3          } 
+  93   2        }       
+  94   1      }
+  95          
+  96          
+  97          //实际功能
+  98          void lcd1602_hello()
+  99          {
+ 100   1        lcd1602_init();
+ 101   1        lcd1602_show(0,0,"Hello!");
+ 102   1        delay_ms(1500);
+ 103   1        lcd1602_clear();
+ 104   1        lcd1602_stop();
+ 105   1      }
+ 106          
+ 107          void lcd1602_welcome(uint i)
+ 108          {
+ 109   1        uchar kks[6]="User0";
+ 110   1        kks[4]=i+'0';
+ 111   1        lcd1602_wake();
+ 112   1        lcd1602_show(0,0,kks);
+ 113   1        lcd1602_show(0,1,"Welcome!");
+ 114   1        delay_ms(1500);
+ 115   1        lcd1602_clear();
+C51 COMPILER V9.59.0.0   LCD1602                                                           09/05/2025 19:07:46 PAGE 3   
+
+ 116   1        lcd1602_stop();
+ 117   1      }
+ 118          
+ 119          void lcd1602_away()
+ 120          {
+ 121   1        lcd1602_wake();
+ 122   1        lcd1602_show(0,0,"Wrong!");
+ 123   1        switch(check_flag)
+ 124   1        {
+ 125   2          case 1:lcd1602_show(0,1,"Rest 4 times!");break;
+ 126   2          case 2:lcd1602_show(0,1,"Rest 3 times!");break;
+ 127   2          case 3:lcd1602_show(0,1,"Rest 2 times!");break;
+ 128   2          case 4:lcd1602_show(0,1,"Rest 1 time!");break;
+ 129   2        }
+ 130   1        delay_ms(1500);
+ 131   1        lcd1602_clear();   //不清屏幕，多余显示
+ 132   1        lcd1602_stop(); 
+ 133   1      }
+ 134          
+ 135          void lcd1602_bakabaka()
+ 136          {
+ 137   1        lcd1602_wake();
+ 138   1        lcd1602_show(0,0,"baka or thief?");
+ 139   1        lcd1602_show(0,1,"Waiting 1 min!");
+ 140   1        delay_ms(1500);
+ 141   1        lcd1602_clear();
+ 142   1        lcd1602_stop();
+ 143   1      }
+ 144          
+ 145          void lcd1602_restart()
+ 146          {
+ 147   1        lcd1602_wake();
+ 148   1        lcd1602_show(0,0,"Restart!");
+ 149   1        lcd1602_show(0,1,"Never again baka");
+ 150   1        delay_ms(1500);
+ 151   1        lcd1602_clear();
+ 152   1        lcd1602_stop();
+ 153   1      }
+ 154          
+ 155          void lcd1602_change_before(uchar secret_code)
+ 156          {
+ 157   1        uchar kks[13]="User0 secret";
+ 158   1        kks[4]=secret_code-'a'+1+'0';
+ 159   1        lcd1602_wake();
+ 160   1        lcd1602_show(0,0,"Need:");
+ 161   1        lcd1602_show(0,1,kks);
+ 162   1        delay_ms(1500);
+ 163   1        lcd1602_clear();
+ 164   1        lcd1602_stop();
+ 165   1      }
+ 166          
+ 167          void lcd1602_change_ok(uchar secret_code)
+ 168          {
+ 169   1        uchar kks[13]="User0 secret";
+ 170   1        kks[4]=secret_code-'a'+1+'0';
+ 171   1        lcd1602_wake();
+ 172   1        lcd1602_show(0,0,"OK to change:");
+ 173   1        lcd1602_show(0,1,kks);
+ 174   1        delay_ms(1500);
+ 175   1        lcd1602_clear();
+ 176   1        lcd1602_stop();
+ 177   1      }
+C51 COMPILER V9.59.0.0   LCD1602                                                           09/05/2025 19:07:46 PAGE 4   
+
+ 178          
+ 179          void lcd1602_change_stop(uchar secret_code)
+ 180          {
+ 181   1        uchar kks[13]="User0 secret";
+ 182   1        kks[4]=secret_code-'a'+1+'0';
+ 183   1        lcd1602_wake();
+ 184   1        lcd1602_show(0,0,"Stop change:");
+ 185   1        lcd1602_show(0,1,kks);
+ 186   1        delay_ms(1500);
+ 187   1        lcd1602_clear();
+ 188   1        lcd1602_stop();
+ 189   1      }
+ 190          
+ 191          void lcd1602_change_fin(uchar secret_code)
+ 192          {
+ 193   1        uchar kks[13]="User0 secret";
+ 194   1        kks[4]=secret_code-'a'+1+'0';
+ 195   1        lcd1602_wake();
+ 196   1        lcd1602_show(0,0,"Success change:");
+ 197   1        lcd1602_show(0,1,kks);
+ 198   1        delay_ms(1500);
+ 199   1        lcd1602_clear();
+ 200   1        lcd1602_stop();
+ 201   1      }
+ 202          
+ 203          void lcd1602_change_away(uchar secret_code)
+ 204          {
+ 205   1        uchar kks[13]="User0 secret";
+ 206   1        kks[4]=secret_code-'a'+1+'0';
+ 207   1        lcd1602_wake();
+ 208   1        lcd1602_show(0,0,"Wrong：");
+ 209   1        lcd1602_show(0,1,kks);
+ 210   1        delay_ms(1500);
+ 211   1        lcd1602_clear();
+ 212   1        switch(check_flag)
+ 213   1        {
+ 214   2          case 1:lcd1602_show(0,0,"Rest 4 times!");break;
+ 215   2          case 2:lcd1602_show(0,0,"Rest 3 times!");break;
+ 216   2          case 3:lcd1602_show(0,0,"Rest 2 times!");break;
+ 217   2          case 4:lcd1602_show(0,0,"Rest 1 time!");break;
+ 218   2        }
+ 219   1        delay_ms(1500);
+ 220   1        lcd1602_clear();   
+ 221   1        lcd1602_stop(); 
+ 222   1      }
+ 223          
+ 224          void lcd1602_change_restart(uchar secret_code)
+ 225          {
+ 226   1        uchar kks[13]="User0 secret";
+ 227   1        kks[4]=secret_code-'a'+1+'0';
+ 228   1        lcd1602_wake();
+ 229   1        lcd1602_show(0,0,"Restart change：");
+ 230   1        lcd1602_show(0,1,kks);
+ 231   1        delay_ms(1500);
+ 232   1        lcd1602_clear();   
+ 233   1        lcd1602_stop(); 
+ 234   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    952    ----
+   CONSTANT SIZE    =    292    ----
+C51 COMPILER V9.59.0.0   LCD1602                                                           09/05/2025 19:07:46 PAGE 5   
+
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----      97
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

@@ -1,0 +1,94 @@
+C51 COMPILER V9.59.0.0   MAIN                                                              09/05/2025 19:07:46 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Obj\main.obj
+COMPILER INVOKED BY: D:\Program Files\Keil\Keil_v5\C51\BIN\C51.EXE User\main.c OPTIMIZE(8,SPEED) BROWSE INCDIR(.\Public;
+                    -.\App\LCD1602;.\App\LED;.\App\Button;.\App\Beep;.\App\Motor;.\App\Change;.\App\Paused;.\App\Eeprow) DEBUG OBJECTEXTEND P
+                    -RINT(.\Obj\main.lst) TABS(2) OBJECT(.\Obj\main.obj)
+
+line level    source
+
+   1          #include "public.h" //自己的一般用“”
+   2          #include "globals.h"
+   3          #include "change.h"   
+   4          #include "paused.h"
+   5          #include "button.h"
+   6          #include "led.h"
+   7          #include "lcd1602.h"
+   8          #include "beep.h"
+   9          #include "motor.h"
+  10          #include "usingeeprow.h"
+  11          
+  12          uchar secret_user1[7]={0};
+  13          uchar secret_user2[7]={0};
+  14          uchar secret_user3[7]={0};
+  15          
+  16          uchar now_str[7]={0};
+  17          uint now_str_loc=0;
+  18          uchar now;
+  19          
+  20          uchar check_flag=0;
+  21          uchar paused_flag=0;
+  22          uint paused_time=60;
+  23          bit paused_finish_flag=0;
+  24          
+  25          uchar change_str[7]={0};
+  26          uint change_str_loc=0;
+  27          uchar change;
+  28          
+  29          void main()
+  30          {
+  31   1        motor_stop();
+  32   1        beep_start();
+  33   1        lcd1602_hello();
+  34   1        
+  35   1        if (IapReadByte(INIT_FLAG_ADDR) != 0x5A)
+  36   1        {     
+  37   2          Initialize_EEPROM();        // 检测初始化标志
+  38   2          IapWriteByte(INIT_FLAG_ADDR, 0x5A); // 设置标志位
+  39   2        }//初始化仅仅调用一次
+  40   1        Arrays_LoadFromEEPROM(); //将eeprow的数据写入raw
+  41   1        
+  42   1        while(1)
+  43   1        {
+  44   2          motor_stop();
+  45   2          
+  46   2          if(paused_finish_flag)    //提前判断，防止中断函数结束时失败
+  47   2          {
+  48   3            beep_start();
+  49   3            lcd1602_restart();
+  50   3            paused_finish_flag=0;
+  51   3          }
+  52   2          
+  53   2          if(!paused_flag)
+C51 COMPILER V9.59.0.0   MAIN                                                              09/05/2025 19:07:46 PAGE 2   
+
+  54   2          { 
+  55   3            led_show(now_str);
+  56   3            now=button_is();
+  57   3            if(now!=0)
+  58   3            {
+  59   4              if(now>='0' && now<='9') num();
+  60   4              else if(now=='A') del();
+  61   4              else if(now=='B') check();
+  62   4              else if(now>='a' && now<='c') change_secret(now);
+  63   4            }
+  64   3          }
+  65   2          else led_paused();    
+  66   2        } 
+  67   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    133    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     45    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      1    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

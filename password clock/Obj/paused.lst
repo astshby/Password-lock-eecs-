@@ -1,0 +1,82 @@
+C51 COMPILER V9.59.0.0   PAUSED                                                            09/05/2025 19:07:46 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE PAUSED
+OBJECT MODULE PLACED IN .\Obj\paused.obj
+COMPILER INVOKED BY: D:\Program Files\Keil\Keil_v5\C51\BIN\C51.EXE App\Paused\paused.c OPTIMIZE(8,SPEED) BROWSE INCDIR(.
+                    -\Public;.\App\LCD1602;.\App\LED;.\App\Button;.\App\Beep;.\App\Motor;.\App\Change;.\App\Paused;.\App\Eeprow) DEBUG OBJECT
+                    -EXTEND PRINT(.\Obj\paused.lst) TABS(2) OBJECT(.\Obj\paused.obj)
+
+line level    source
+
+   1          #include "change.h"
+   2          
+   3          uint count_200us;
+   4          uint count_50ms;
+   5          
+   6          void paused_start()
+   7          {
+   8   1        count_200us=0;   
+   9   1        count_50ms=0;
+  10   1        LED_paused=1;
+  11   1        IE=0x82;
+  12   1        TMOD=0x02;
+  13   1        TCON=0x10;
+  14   1        TL0=0x48;
+  15   1        TH0=0x48;  //¼ÇÂ¼200us
+  16   1        paused_flag=1;
+  17   1      }
+  18          void paused_stop()
+  19          {
+  20   1        LED_paused=0;
+  21   1        TH0=0x00;
+  22   1        TL0=0x00;
+  23   1        TCON=0x00;
+  24   1        TMOD=0x00;
+  25   1        IE=0x00;
+  26   1        paused_time=60;
+  27   1        paused_flag=0;
+  28   1      } 
+  29          
+  30          void paused_min() interrupt 1
+  31          {
+  32   1        if(paused_time==0)
+  33   1        {
+  34   2          led_paused();
+  35   2          paused_stop();
+  36   2          paused_finish_flag=1;
+  37   2          return ;
+  38   2        }
+  39   1        
+  40   1        count_200us++;
+  41   1        
+  42   1        if(count_200us==250)
+  43   1        {
+  44   2          count_200us=0;
+  45   2          count_50ms++;
+  46   2          
+  47   2          if(count_50ms==20)
+  48   2          {
+  49   3            count_50ms=0;
+  50   3            LED_paused=~LED_paused;
+  51   3            paused_time--;
+  52   3          }
+  53   2        }
+C51 COMPILER V9.59.0.0   PAUSED                                                            09/05/2025 19:07:46 PAGE 2   
+
+  54   1      }
+  55            
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    169    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      4    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

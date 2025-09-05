@@ -1,0 +1,86 @@
+C51 COMPILER V9.59.0.0   CC                                                                09/04/2025 20:14:33 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE CC
+OBJECT MODULE PLACED IN .\Obj\cc.obj
+COMPILER INVOKED BY: D:\Program Files\Keil\Keil_v5\C51\BIN\C51.EXE App\Check&Change\cc.c OPTIMIZE(8,SPEED) BROWSE INCDIR
+                    -(.\Public;.\App\LCD1602;.\App\LED;.\App\Button;.\App\Beep;.\App\Motor;.\App\Check Change;.\App\Paused) DEBUG OBJECTEXTEN
+                    -D PRINT(.\Obj\cc.lst) TABS(2) OBJECT(.\Obj\cc.obj)
+
+line level    source
+
+   1          #include "cc.h"
+   2          
+   3          bit compare(uchar *temp1)
+   4          {
+   5   1        uchar* temp2=now_str;
+   6   1        while(*temp1 && *temp2 && (*temp1!=*temp2))
+   7   1        {
+   8   2          temp1++;
+   9   2          temp2++;
+  10   2        }
+  11   1        return (*temp1=='\0' && *temp2=='\0');
+  12   1      }
+  13          
+  14          void check()
+  15          {
+  16   1        if(check_flag<=5)
+  17   1        {
+  18   2          if(compare(secert_user1))
+  19   2          {
+  20   3            beep_yes();
+  21   3            lcd1602_welcome(1);
+  22   3            del();del();del();del();del();del();
+  23   3          }
+  24   2          else if(compare(secert_user2))
+  25   2          {
+  26   3            beep_yes();
+  27   3            lcd1602_welcome(2);
+  28   3            del();del();del();del();del();del();
+  29   3          }
+  30   2          else if(compare(secert_user3))
+  31   2          {
+  32   3            beep_yes();
+  33   3            lcd1602_welcome(3);
+  34   3            del();del();del();del();del();del();
+  35   3          }
+  36   2          else
+  37   2          {
+  38   3            beep_no();
+  39   3            lcd1602_away();
+  40   3            del();del();del();del();del();del();
+  41   3            check_flag++;
+  42   3          }   
+  43   2        }
+  44   1        else
+  45   1        {
+  46   2          beep_paused();
+  47   2          lcd1602_bakabaka();
+  48   2          del();del();del();del();del();del();
+  49   2          
+  50   2          paused_init();
+*** WARNING C206 IN LINE 50 OF App\Check&Change\cc.c: 'paused_init': missing function-prototype
+  51   2          paused_min();
+*** WARNING C206 IN LINE 51 OF App\Check&Change\cc.c: 'paused_min': missing function-prototype
+C51 COMPILER V9.59.0.0   CC                                                                09/04/2025 20:14:33 PAGE 2   
+
+  52   2          
+  53   2          beep_start();
+  54   2          lcd1602_restart();
+  55   2          check_flag=0;
+  56   2        }
+  57   1      } 
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    242    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----       6
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  2 WARNING(S),  0 ERROR(S)

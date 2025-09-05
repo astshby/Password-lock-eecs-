@@ -1,0 +1,223 @@
+C51 COMPILER V9.59.0.0   CHANGE                                                            09/05/2025 19:07:46 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE CHANGE
+OBJECT MODULE PLACED IN .\Obj\change.obj
+COMPILER INVOKED BY: D:\Program Files\Keil\Keil_v5\C51\BIN\C51.EXE App\Change\change.c OPTIMIZE(8,SPEED) BROWSE INCDIR(.
+                    -\Public;.\App\LCD1602;.\App\LED;.\App\Button;.\App\Beep;.\App\Motor;.\App\Change;.\App\Paused;.\App\Eeprow) DEBUG OBJECT
+                    -EXTEND PRINT(.\Obj\change.lst) TABS(2) OBJECT(.\Obj\change.obj)
+
+line level    source
+
+   1          #include "change.h"
+   2          
+   3          bit compare(uchar *temp1)
+   4          {
+   5   1        uchar* temp2=now_str;
+   6   1        while(*temp1 && *temp2 && (*temp1==*temp2))
+   7   1        {
+   8   2          temp1++;
+   9   2          temp2++;
+  10   2        }
+  11   1        return (*temp1=='\0' && *temp2=='\0');
+  12   1      }
+  13          
+  14          void check()
+  15          {
+  16   1        check_flag++;
+  17   1        if(check_flag<5)    
+  18   1        {
+  19   2          if(compare(secret_user1))
+  20   2          {
+  21   3            check_flag=0;
+  22   3            beep_yes();
+  23   3            lcd1602_welcome(1);
+  24   3            motor_using(3000);
+  25   3            del();del();del();del();del();del();
+  26   3          }
+  27   2          else if(compare(secret_user2))
+  28   2          {
+  29   3            check_flag=0;
+  30   3            beep_yes();
+  31   3            lcd1602_welcome(2);
+  32   3            motor_using(3000);
+  33   3            del();del();del();del();del();del();
+  34   3          }
+  35   2          else if(compare(secret_user3))
+  36   2          {
+  37   3            check_flag=0;
+  38   3            beep_yes();
+  39   3            lcd1602_welcome(3);
+  40   3            motor_using(3000);
+  41   3            del();del();del();del();del();del();
+  42   3          }
+  43   2          else
+  44   2          {
+  45   3            beep_no();
+  46   3            lcd1602_away();
+  47   3            del();del();del();del();del();del();
+  48   3            
+  49   3          }   
+  50   2        }
+  51   1        else
+  52   1        {
+  53   2          beep_paused();
+C51 COMPILER V9.59.0.0   CHANGE                                                            09/05/2025 19:07:46 PAGE 2   
+
+  54   2          lcd1602_bakabaka();
+  55   2          del();del();del();del();del();del();
+  56   2          
+  57   2          paused_start();
+  58   2      
+  59   2          check_flag=0;
+  60   2        }
+  61   1      } 
+  62          
+  63          bit change_check(uchar secret_code)
+  64          {
+  65   1        bit ans;
+  66   1        switch(secret_code)
+  67   1        {
+  68   2          case 'a':ans=compare(secret_user1);break;
+  69   2          case 'b':ans=compare(secret_user2);break;
+  70   2          case 'c':ans=compare(secret_user3);break;
+  71   2          default:ans=0;
+  72   2          return ans;
+  73   2        }
+  74   1      }
+  75          void last_change(uchar *new_str,uchar *past_str,uchar secret_code)
+  76          {
+  77   1        while((*past_str++ = *new_str++));      //可能会有多的东西读入
+  78   1        Arrays_SaveToEEPROM(secret_code);
+  79   1        
+  80   1        change_del();change_del();change_del();change_del();change_del();change_del();
+  81   1        beep_change_fin();
+  82   1        lcd1602_change_fin(secret_code);
+  83   1      } 
+  84          
+  85          void change_secret(uchar secret_code)
+  86          {
+  87   1        motor_stop();
+  88   1        del();del();del();del();del();del();
+  89   1        beep_change_start();
+  90   1        lcd1602_change_before(secret_code);
+  91   1        
+  92   1        while(1)
+  93   1        {
+  94   2          motor_stop();
+  95   2          
+  96   2          if(paused_finish_flag)
+  97   2          {
+  98   3            beep_start();
+  99   3            lcd1602_restart();
+ 100   3            paused_finish_flag=0;
+ 101   3          }
+ 102   2          
+ 103   2          if(!paused_flag)
+ 104   2          {
+ 105   3            led_show(now_str);
+ 106   3            now=button_is();
+ 107   3            if(now!=0)
+ 108   3            {
+ 109   4              if(now>='0' && now<='9') num();
+ 110   4              else if(now=='A') del();
+ 111   4              else if(now=='B') 
+ 112   4              {
+ 113   5                bit ans=change_check(secret_code);
+ 114   5                if(ans) 
+ 115   5                {
+C51 COMPILER V9.59.0.0   CHANGE                                                            09/05/2025 19:07:46 PAGE 3   
+
+ 116   6                  del();del();del();del();del();del();
+ 117   6                  break;
+ 118   6                }
+ 119   5                else 
+ 120   5                {
+ 121   6                  check_flag++;
+ 122   6                  
+ 123   6                  if(check_flag<5)
+ 124   6                  {
+ 125   7                    beep_no();
+ 126   7                    lcd1602_change_away(secret_code);
+ 127   7                    del();del();del();del();del();del();
+ 128   7                  }
+ 129   6                  else
+ 130   6                  {
+ 131   7                    beep_paused();
+ 132   7                    lcd1602_bakabaka();
+ 133   7                    del();del();del();del();del();del();
+ 134   7                    paused_start();
+ 135   7                    check_flag=0;
+ 136   7                  }
+ 137   6                }
+ 138   5              }
+ 139   4              else if(now>='a' && now<='c')
+ 140   4              {
+ 141   5                del();del();del();del();del();del();
+ 142   5                beep_change_start();
+ 143   5                lcd1602_change_stop(secret_code);
+ 144   5                return;
+ 145   5              }
+ 146   4            }
+ 147   3          }
+ 148   2          else
+ 149   2          {
+ 150   3            if(!paused_finish_flag) led_paused();
+ 151   3            else
+ 152   3            {
+ 153   4              motor_stop();
+ 154   4              beep_start();
+ 155   4              lcd1602_change_restart(secret_code);
+ 156   4              paused_finish_flag=0;
+ 157   4            } 
+ 158   3          }
+ 159   2        }
+ 160   1      
+ 161   1        motor_stop();
+ 162   1        beep_change_ok();
+ 163   1        lcd1602_change_ok(secret_code);
+ 164   1        while(1)
+ 165   1        {
+ 166   2          motor_stop();
+ 167   2          led_show(change_str);
+ 168   2          change=button_is();
+ 169   2          if(change!=0)
+ 170   2          {
+ 171   3            if(change>='0' && change<='9') change_num();
+ 172   3            else if(change=='A') change_del();
+ 173   3            else if(change>='a' && change<='c')
+ 174   3            {
+ 175   4              change_del();change_del();change_del();change_del();change_del();change_del();
+ 176   4              beep_change_start();
+ 177   4              lcd1602_change_stop(secret_code);
+C51 COMPILER V9.59.0.0   CHANGE                                                            09/05/2025 19:07:46 PAGE 4   
+
+ 178   4              return;
+ 179   4            }
+ 180   3            else if(change=='%' && change_str_loc>0)
+ 181   3            {
+ 182   4              switch(secret_code)
+ 183   4              {
+ 184   5                case 'a':last_change(change_str,secret_user1,secret_code);return ;
+ 185   5                case 'b':last_change(change_str,secret_user2,secret_code);return ;
+ 186   5                case 'c':last_change(change_str,secret_user3,secret_code);return ;
+ 187   5              }
+ 188   4            }
+ 189   3          }
+ 190   2        }
+ 191   1      }
+*** WARNING C291 IN LINE 74 OF App\Change\change.c: not every exit path returns a value
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    806    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----      14
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----       2
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  1 WARNING(S),  0 ERROR(S)

@@ -1,0 +1,198 @@
+C51 COMPILER V9.59.0.0   USINGEEPROW                                                       09/05/2025 19:07:46 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE USINGEEPROW
+OBJECT MODULE PLACED IN .\Obj\usingeeprow.obj
+COMPILER INVOKED BY: D:\Program Files\Keil\Keil_v5\C51\BIN\C51.EXE App\Eeprow\usingeeprow.c OPTIMIZE(8,SPEED) BROWSE INC
+                    -DIR(.\Public;.\App\LCD1602;.\App\LED;.\App\Button;.\App\Beep;.\App\Motor;.\App\Change;.\App\Paused;.\App\Eeprow) DEBUG O
+                    -BJECTEXTEND PRINT(.\Obj\usingeeprow.lst) TABS(2) OBJECT(.\Obj\usingeeprow.obj)
+
+line level    source
+
+   1          #include "usingeeprow.h"
+   2          
+   3          /* 关闭IAP功能 */
+   4          void IapIdle()
+   5          {
+   6   1          IAP_CONTR = 0;    // 关闭IAP功能
+   7   1          IAP_CMD = 0;      // 清除命令寄存器
+   8   1          IAP_TRIG = 0;     // 清除触发寄存器
+   9   1          IAP_ADDRH = 0xFF; // 将地址指向非EEPROM区域，防止误操作
+  10   1          IAP_ADDRL = 0xFF;
+  11   1      }
+  12          
+  13          /* 从EEPROM字节读取 */
+  14          uchar IapReadByte(uint addr)
+  15          {
+  16   1          uchar dat; // 存储读出的数据
+  17   1      
+  18   1          IAP_CONTR = ENABLE_IAP;        // 使能IAP
+  19   1          IAP_CMD = IAP_READ;            // 设置读命令
+  20   1          IAP_ADDRL = addr;              // 设置目标地址低8位
+  21   1          IAP_ADDRH = addr >> 8;          // 设置目标地址高8位
+  22   1      
+  23   1          // 触发命令 (先写0x5A, 再写0xA5)
+  24   1          IAP_TRIG = 0x46;
+  25   1          IAP_TRIG = 0xB9;
+  26   1          _nop_();                       // 等待操作完成
+  27   1          _nop_();
+  28   1      
+  29   1          dat = IAP_DATA;                // 读取数据
+  30   1          IapIdle();                     // 关闭IAP
+  31   1      
+  32   1          return dat;
+  33   1      }
+  34          
+  35          /* 向EEPROM字节写入 */
+  36          void IapWriteByte(uint addr, uchar dat)
+  37          {
+  38   1          IAP_CONTR = ENABLE_IAP;        // 使能IAP
+  39   1          IAP_CMD = IAP_WRITE;           // 设置写命令
+  40   1          IAP_ADDRL = addr;              // 设置目标地址低8位
+  41   1          IAP_ADDRH = addr >> 8;          // 设置目标地址高8位
+  42   1          IAP_DATA = dat;                // 准备要写入的数据
+  43   1      
+  44   1          // 触发命令 (先写0x5A, 再写0xA5)
+  45   1          IAP_TRIG = 0x46;
+  46   1          IAP_TRIG = 0xB9;
+  47   1          _nop_();                       // 等待操作完成
+  48   1          _nop_();
+  49   1      
+  50   1          IapIdle();                     // 关闭IAP
+  51   1      }
+  52          
+  53          /* 擦除EEPROM扇区 */
+C51 COMPILER V9.59.0.0   USINGEEPROW                                                       09/05/2025 19:07:46 PAGE 2   
+
+  54          void IapEraseSector(uint addr)
+  55          {
+  56   1          // 注意：擦除操作是针对整个扇区的！addr只需落在该扇区内即可。
+  57   1          IAP_CONTR = ENABLE_IAP;        // 使能IAP
+  58   1          IAP_CMD = IAP_ERASE;           // 设置擦除命令
+  59   1          IAP_ADDRL = addr;              // 设置扇区地址低8位（地址只需在扇区内即可）
+  60   1          IAP_ADDRH = addr >> 8;          // 设置扇区地址高8位
+  61   1      
+  62   1          // 触发命令 (先写0x5A, 再写0xA5)
+  63   1          IAP_TRIG = 0x46;
+  64   1          IAP_TRIG = 0xB9;
+  65   1          _nop_();                       // 等待操作完成（擦除时间较长）
+  66   1          _nop_();
+  67   1      
+  68   1          IapIdle();                     // 关闭IAP
+  69   1      }
+  70          
+  71          //功能函数
+  72          //  从EEPROM读取三个数组到RAM
+  73          void Arrays_LoadFromEEPROM()
+  74          {
+  75   1          uint i;
+  76   1          uint addr;
+  77   1      
+  78   1          // 读取数组1
+  79   1          addr = SECRET1_EEPROM_ADDR;
+  80   1          for (i = 0; i < SECRET1_LEN; i++) {
+  81   2              secret_user1[i] = IapReadByte(addr++);
+  82   2          }
+  83   1      
+  84   1          // 读取数组2
+  85   1          addr = SECRET2_EEPROM_ADDR;
+  86   1          for (i = 0; i < SECRET2_LEN; i++) {
+  87   2              secret_user2[i] = IapReadByte(addr++);
+  88   2          }
+  89   1      
+  90   1          // 读取数组3
+  91   1          addr = SECRET3_EEPROM_ADDR;
+  92   1          for (i = 0; i < SECRET3_LEN; i++) {
+  93   2              secret_user3[i] = IapReadByte(addr++);
+  94   2          }
+  95   1      }
+  96          
+  97          // 2. 将三个数组从RAM写入EEPROM
+  98          void Arrays_SaveToEEPROM(uchar secret_code)
+  99          {
+ 100   1          uint i;
+ 101   1          uint addr;
+ 102   1      
+ 103   1          // **重要：STC的EEPROM写入前必须先擦除整个扇区！**
+ 104   1          // 假设数组1、2、3位于不同的扇区，或者你需要计算它们共同所在的扇区。
+ 105   1          // 这里为了简单，我们擦除每个数组所在的整个扇区。
+ 106   1          // 注意：擦除会清除整个扇区（通常是512字节），所以请确保你的数据布局不会因此丢失其他数据。
+ 107   1          
+ 108   1          switch(secret_code)
+ 109   1          {
+ 110   2            case 'a':
+ 111   2            {
+ 112   3              // 擦除数组1所在的扇区（使用数组1的起始地址）
+ 113   3              IapEraseSector(SECRET1_EEPROM_ADDR);
+ 114   3              // 写入数组1
+ 115   3              addr = SECRET1_EEPROM_ADDR;
+C51 COMPILER V9.59.0.0   USINGEEPROW                                                       09/05/2025 19:07:46 PAGE 3   
+
+ 116   3              for (i = 0; i < SECRET1_LEN; i++) IapWriteByte(addr++, secret_user1[i]);
+ 117   3              break;
+ 118   3            }
+ 119   2            case 'b':
+ 120   2            {
+ 121   3              // 擦除数组2所在的扇区（使用数组1的起始地址）
+ 122   3              IapEraseSector(SECRET2_EEPROM_ADDR);
+ 123   3              // 写入数组2
+ 124   3              addr = SECRET2_EEPROM_ADDR;
+ 125   3              for (i = 0; i < SECRET2_LEN; i++) IapWriteByte(addr++, secret_user2[i]);
+ 126   3              break;
+ 127   3            }
+ 128   2            case 'c':
+ 129   2            {
+ 130   3              // 擦除数组3所在的扇区（使用数组1的起始地址）
+ 131   3              IapEraseSector(SECRET3_EEPROM_ADDR);
+ 132   3              // 写入数组3
+ 133   3              addr = SECRET3_EEPROM_ADDR;
+ 134   3              for (i = 0; i < SECRET3_LEN; i++) IapWriteByte(addr++, secret_user3[i]);
+ 135   3              break;
+ 136   3            }
+ 137   2          }   
+ 138   1      }
+ 139          
+ 140          //3.初始化写入，调用一次
+ 141          // 在 usingeeprow.c 中添加
+ 142          void Initialize_EEPROM()
+ 143          {
+ 144   1          uint i;
+ 145   1          // 定义初始值
+ 146   1          uchar default1[SECRET1_LEN] = {'1', '1', '4', '5', '1', '4', '\0'}; // 密码1
+ 147   1          uchar default2[SECRET2_LEN] = {'1', '9', '1', '9', '8', '1', '\0'}; // 密码2
+ 148   1          uchar default3[SECRET3_LEN] = {'1', '2', '3', '4', '5', '6', '\0'}; // 密码3
+ 149   1          
+ 150   1          // 写入密码1
+ 151   1          IapEraseSector(SECRET1_EEPROM_ADDR);
+ 152   1          for (i = 0; i < SECRET1_LEN; i++) {
+ 153   2              IapWriteByte(SECRET1_EEPROM_ADDR + i, default1[i]);
+ 154   2          }
+ 155   1          
+ 156   1          // 写入密码2
+ 157   1          IapEraseSector(SECRET2_EEPROM_ADDR);
+ 158   1          for (i = 0; i < SECRET2_LEN; i++) {
+ 159   2              IapWriteByte(SECRET2_EEPROM_ADDR + i, default2[i]);
+ 160   2          }
+ 161   1          
+ 162   1          // 写入密码3
+ 163   1          IapEraseSector(SECRET3_EEPROM_ADDR);
+ 164   1          for (i = 0; i < SECRET3_LEN; i++) {
+ 165   2              IapWriteByte(SECRET3_EEPROM_ADDR + i, default3[i]);
+ 166   2          }
+ 167   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    501    ----
+   CONSTANT SIZE    =     21    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----      23
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+C51 COMPILER V9.59.0.0   USINGEEPROW                                                       09/05/2025 19:07:46 PAGE 4   
+
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

@@ -1,0 +1,13 @@
+".\Obj\main.obj",
+".\Obj\public.obj",
+".\Obj\lcd1602.obj",
+".\Obj\led.obj",
+".\Obj\button.obj",
+".\Obj\beep.obj",
+".\Obj\motor.obj",
+".\Obj\change.obj",
+".\Obj\paused.obj",
+".\Obj\usingeeprow.obj",
+".\Obj\STARTUP.obj" 
+TO ".\Obj\lock" 
+PRINT(".\Obj\lock.m51") RAMSIZE(256) 
