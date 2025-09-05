@@ -1,0 +1,62 @@
+#include "led.h"
+uchar record[11]={0x3f,0x06,0x5b,0x4f,0x66,0x6d,0x7d,0x07,0x7f,0x6f,0x40};
+
+void decode3_8(unsigned char i) 
+{
+    pin2=i&0x01;       
+    pin3=(i>>1)&0x01; 
+    pin4=(i>>2)&0x01;
+	return; 
+}
+
+void led_show(uchar *str)
+{
+	if(*str=='\0')
+	{
+		uchar i=6;
+		while(i>0)
+		{
+			decode3_8(i--);
+			led_data=record[10];
+			delay_ms(1);
+		}
+		led_data=0x00; //Ïû³ýÒõÓ°
+		return;
+	}
+	else
+	{
+		uchar i=6;
+		while(*str!='\0')
+		{
+			decode3_8(i--);
+			led_data=record[*str-'0'];
+			delay_ms(1);
+			str++;	
+		}
+		while(i>0)
+		{
+			decode3_8(i--);
+			led_data=record[10];
+			delay_ms(1);
+		}
+		led_data=0x00;
+		return ;
+	}
+}
+
+
+
+void num()
+{
+	if (now_str_loc < 6 && now_str[6]!='\0') 
+	{ 
+		now_str[now_str_loc++]=now;
+		now_str[now_str_loc]='\0'; 	//Ìí¼ÓÖÕÖ¹·û
+	} 
+	else 
+	{
+		if(now_str_loc>=6) now_str_loc=0;
+		now_str[now_str_loc++]=now;			
+	}
+	return ;
+}
